@@ -21,7 +21,7 @@ def get_all_git_repos(path):
     return list(filter(not_none, map(path_to_repo, map(join, [path] * len(listdir(path)), listdir(path)))))
 
 
-def git_pull_repos(repos):
+def pull_repos(repos):
     """拉取到最新代码"""
     for repo in repos:
         git_pull_single_repo(repo)
@@ -43,24 +43,48 @@ def get_remote_branch_name(branch_name):
     return 'origin/' + branch_name
 
 
-def git_checkout(repos, branch):
+def checkout_repos(repos, branch):
     """切换分支"""
     for repo in repos:
-        print(repo.git_dir)
-        remote_branch = get_remote_branch_name(branch)
-        try:
-            if branch in list(map(get_branch_name, repo.branches)):
-                # 如果存在本地分支，则直接checkout到本地分支
-                print(repo.git.checkout(branch))
-            elif remote_branch in list(map(get_branch_name, repo.remotes.origin.refs)):
-                # 如果存在远端分支，则追踪至远端分支
-                print(repo.git.checkout(remote_branch, b=branch))
-            else:
-                print('Your repository does not have this branch.')
-        except GitCommandError:
-            print("TODO")
+        checkout(repo, branch)
 
-        print()
+
+def checkout(repo, branch):
+    # 远端分支名称
+    # print(branch)
+    # print(list(map(get_branch_name, repo.branches)))
+    # print(list(map(get_branch_name, repo.remotes.origin.refs)))
+    remote_branch = get_remote_branch_name(branch)
+    try:
+        if branch in list(map(get_branch_name, repo.branches)):
+            # 如果存在本地分支，则直接checkout到本地分支
+            print(repo.git.checkout(branch))
+        elif remote_branch in list(map(get_branch_name, repo.remotes.origin.refs)):
+            # 如果存在远端分支，则追踪至远端分支
+            print(repo.git.checkout(remote_branch, b=branch))
+        else:
+            print('Your repository does not have this branch.')
+    except GitCommandError:
+        print("TODO")
+
+    print()
+
+
+def create_branches(repos, branch):
+    """拉取新分支"""
+    for repo in repos:
+        create_branch(repo, branch)
+
+
+def create_branch(repo, branch):
+    # 切换至dev分支
+    checkout(repo, 'dev')
+    # 创建本地分支
+    repo.create_head(branch)
+    # 切换至新分支
+    checkout(repo, branch)
+    # push到远端
+    repo.git.push('origin', branch)
 
 
 def parse_args(path, method, branch=''):
@@ -68,15 +92,18 @@ def parse_args(path, method, branch=''):
     repos = get_all_git_repos(path)  # 获取全部仓库
     if method == 'pull':
         """拉取最新代码"""
-        git_pull_repos(repos)
-    elif (method == 'checkout' or 'co') and branch != '':
+        pull_repos(repos)
+    elif (method == 'checkout' or method == 'co') and branch != '':
         """切换到指定分支"""
-        git_checkout(repos, branch)
+        checkout_repos(repos, branch)
+    elif method == 'new' and branch != '':
+        """创建新分支"""
+        create_branches(repos, branch)
 
 
 parser = argparse.ArgumentParser(description='Git 批处理工具')
 parser.add_argument('-p', '--path', help='批处理目录[必填项]', required=True)
-parser.add_argument('-m', '--method', help='执行方法[必填项，可选值：pull, checkout(co)]', required=True)
+parser.add_argument('-m', '--method', help='执行方法[必填项，可选值：pull, checkout(可简写成\'co\'), new(创建新分支)]', required=True)
 parser.add_argument('-b', '--branch', help='指定target分支[选填项]', required=False)
 
 args = parser.parse_args()
