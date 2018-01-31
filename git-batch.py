@@ -51,9 +51,6 @@ def checkout_repos(repos, branch):
 
 def checkout(repo, branch):
     # 远端分支名称
-    # print(branch)
-    # print(list(map(get_branch_name, repo.branches)))
-    # print(list(map(get_branch_name, repo.remotes.origin.refs)))
     remote_branch = get_remote_branch_name(branch)
     try:
         if branch in list(map(get_branch_name, repo.branches)):
