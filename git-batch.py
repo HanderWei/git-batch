@@ -87,25 +87,29 @@ def create_branch(repo, branch):
     repo.git.push('origin', branch)
 
 
-def parse_args(path, method, branch=''):
+def handle_args():
     """解析脚本参数"""
-    repos = get_all_git_repos(path)  # 获取全部仓库
+    repos = get_all_git_repos(args.path[0])  # 获取全部仓库
+    method = args.method
     if method == 'pull':
         """拉取最新代码"""
         pull_repos(repos)
-    elif (method == 'checkout' or method == 'co') and branch != '':
+    elif (method == 'checkout' or method == 'co') and args.branch != '':
         """切换到指定分支"""
-        checkout_repos(repos, branch)
-    elif method == 'new' and branch != '':
+        checkout_repos(repos, args.branch)
+    elif method == 'new' and args.branch != '':
         """创建新分支"""
-        create_branches(repos, branch)
+        create_branches(repos, args.branch)
+    else:
+        print("no method")
 
 
 parser = argparse.ArgumentParser(description='Git 批处理工具')
-parser.add_argument('-p', '--path', help='批处理目录[必填项]', required=True)
-parser.add_argument('-m', '--method', help='执行方法[必填项，可选值：pull, checkout(可简写成\'co\'), new(创建新分支)]', required=True)
+parser.add_argument('-p', '--path', type=str, default=['.'], help='批处理目录，默认为当前目录', required=False)
+parser.add_argument('method', action='store', type=str, choices=['pull', 'checkout', 'co', 'new'],
+                    help='批量执行任务，pull, checkout[co], new')
 parser.add_argument('-b', '--branch', help='指定target分支[选填项]', required=False)
 
 args = parser.parse_args()
 
-parse_args(args.path, args.method, args.branch)
+handle_args()
