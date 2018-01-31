@@ -89,7 +89,7 @@ def create_branch(repo, branch):
 
 def handle_args():
     """解析脚本参数"""
-    repos = get_all_git_repos(args.path[0])  # 获取全部仓库
+    repos = get_all_git_repos(args.path)  # 获取全部仓库
     method = args.method
     if method == 'pull':
         """拉取最新代码"""
@@ -101,14 +101,14 @@ def handle_args():
         """创建新分支"""
         create_branches(repos, args.branch)
     else:
-        print("no method")
+        print("Not support method")
 
 
 parser = argparse.ArgumentParser(description='Git 批处理工具')
-parser.add_argument('-p', '--path', type=str, default=['.'], help='批处理目录，默认为当前目录', required=False)
+parser.add_argument('-p', '--path', type=str, default='.', help='批处理目录，默认为当前目录', required=False)
 parser.add_argument('method', action='store', type=str, choices=['pull', 'checkout', 'co', 'new'],
                     help='批量执行任务，pull, checkout[co], new')
-parser.add_argument('-b', '--branch', help='指定target分支[选填项]', required=False)
+parser.add_argument('branch', action='store', type=str, default='', help='指定target分支')
 
 args = parser.parse_args()
 
