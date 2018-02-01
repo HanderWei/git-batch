@@ -30,9 +30,10 @@ def pull_repos(repos):
 def git_pull_single_repo(repo):
     """拉取到最新代码"""
     if repo.is_dirty():
-        print(repo.git_dir + " 包含未提交文件，已暂存。\n")
+        print(repo.git_dir + " 包含未提交文件，已暂存。")
         repo.git.stash('save')
     repo.remote().pull()
+    print(repo.working_dir.split('/')[-1] + ' pull finished.')
 
 
 def get_branch_name(branch):
@@ -49,22 +50,33 @@ def checkout_repos(repos, branch):
         checkout(repo, branch)
 
 
-def checkout(repo, branch):
+def get_all_local_branches(repo):
+    return list(map(get_branch_name, repo.branches))
+
+
+def get_all_remote_branches(repo):
+    return list(map(get_branch_name, repo.remotes.origin.refs))
+
+
+def checkout(repo, branch, log=True):
     # 远端分支名称
     remote_branch = get_remote_branch_name(branch)
     try:
-        if branch in list(map(get_branch_name, repo.branches)):
+        if branch in get_all_local_branches(repo):
             # 如果存在本地分支，则直接checkout到本地分支
-            print(repo.git.checkout(branch))
-        elif remote_branch in list(map(get_branch_name, repo.remotes.origin.refs)):
+            repo.git.checkout(branch)
+            if log:
+                print(get_repo_dir_name(repo) + ' checkout finished.')
+        elif remote_branch in get_all_remote_branches(repo):
             # 如果存在远端分支，则追踪至远端分支
-            print(repo.git.checkout(remote_branch, b=branch))
+            repo.git.checkout(remote_branch, b=branch)
+            if log:
+                print(get_repo_dir_name(repo) + ' checkout finished.')
         else:
-            print('Your repository does not have this branch.')
+            if log:
+                print(get_repo_dir_name(repo) + ' does not have this branch.')
     except GitCommandError:
         print("TODO")
-
-    print()
 
 
 def create_branches(repos, branch):
@@ -75,13 +87,60 @@ def create_branches(repos, branch):
 
 def create_branch(repo, branch):
     # 切换至dev分支
-    checkout(repo, 'dev')
+    checkout(repo, 'dev', log=False)
     # 创建本地分支
     repo.create_head(branch)
     # 切换至新分支
-    checkout(repo, branch)
+    checkout(repo, branch, log=False)
     # push到远端
     repo.git.push('origin', branch)
+    print(get_repo_dir_name(repo) + ' create new branch and push to origin.')
+
+
+def get_repo_dir_name(repo):
+    """返回仓库文件夹名称"""
+    return repo.working_dir.split('/')[-1]
+
+
+def delete_branches(repos, branch, remote=False):
+    """删除分支"""
+    for repo in repos:
+        delete_branch(repo, branch, remote)
+
+
+def delete_branch(repo, branch, remote=False):
+    """删除分支"""
+    if remote:
+        delete_remote_branch(branch, repo)
+    else:
+        delete_local_branch(branch, repo)
+
+
+def delete_local_branch(branch, repo):
+    """删除本地分支"""
+    if repo.active_branch.name == branch:
+        print(get_repo_dir_name(repo))
+        print('Cannot delete the branch which you are currently on.')
+        print()
+    elif branch not in get_all_local_branches(repo):
+        print(get_repo_dir_name(repo))
+        print('Branch not found.')
+        print()
+    else:
+        repo.delete_head(branch)
+        print(get_repo_dir_name(repo) + ' delete ' + branch + ' finished.')
+        print()
+
+
+def delete_remote_branch(branch, repo):
+    """删除远端分支"""
+    remote_branch = get_remote_branch_name(branch)
+    if remote_branch not in get_all_remote_branches(repo):
+        print(get_repo_dir_name(repo))
+        print('Branch not found.')
+        print()
+    else:
+        print("TODO")
 
 
 def handle_args():
@@ -97,15 +156,19 @@ def handle_args():
     elif method == 'new' and args.branch != '':
         """创建新分支"""
         create_branches(repos, args.branch)
+    elif method == 'delete' and args.branch != '':
+        """删除分支"""
+        delete_branches(repos, args.branch, args.remote)
     else:
         print("Not support method")
 
 
 parser = argparse.ArgumentParser(description='Git 批处理工具')
 parser.add_argument('-p', '--path', type=str, default='.', help='批处理目录，默认为当前目录', required=False)
-parser.add_argument('method', action='store', type=str, choices=['pull', 'checkout', 'co', 'new'],
+parser.add_argument('-r', '--remote', type=bool, default=False, help='是否操作远端分支，默认为False', required=False)
+parser.add_argument('method', action='store', type=str, choices=['pull', 'checkout', 'co', 'new', 'delete'],
                     help='批量执行任务，pull, checkout[co], new')
-parser.add_argument('branch', action='store', type=str, default='', help='指定target分支')
+parser.add_argument('branch', nargs='?', action='store', type=str, default='', help='指定target分支')
 
 args = parser.parse_args()
 
