@@ -20,13 +20,13 @@ $pip3 install gitpython
 ```
 
 ## 使用
-1. 查看帮助文档
+* 查看帮助文档
 
 ```
 $python git-batch.py -h
 ```
 
-2. 克隆工程
+* 克隆工程
 
 ```
 $python git-batch.py -f clone.txt
@@ -40,20 +40,20 @@ ssh://www.github.com/user/pro2.git
 ssh://www.github.com/user/pro3.git
 ```
 
-3. 更新代码
+* 更新代码
 
 ```
 $python git-batch.py pull
 ```
 
-4. 切换分支
+* 切换分支
 
 ```
 $python git-batch.py checkout master
 $python git-batch.py co master          #与上一条作用相同
 ```
 
-5. 从dev分支上创建新分支
+* 从dev分支上创建新分支
 
 ```
 $python git-batch.py new feature/v2.0
@@ -72,22 +72,22 @@ pro1
 pro2
 ```
 
-6. 删除分支
+* 删除分支
 
-* 删除本地分支
+    * 删除本地分支
 
-```
-$python git-batch.py delete feature/v1.0 -r False
-$python git-batch.py delete feature/v1.0            # 与航一条作用相同
-```
+    ```
+    $python git-batch.py delete feature/v1.0 -r False
+    $python git-batch.py delete feature/v1.0            # 与航一条作用相同
+    ```
 
-> 注意：删除本地分支时，可以不传入 -r 参数
+    > 注意：删除本地分支时，可以不传入 -r 参数
 
-* 删除远端分支
+    * 删除远端分支
 
-```
-$python git-batch.py delete feature/v1.0 -r True
-```
+    ```
+    $python git-batch.py delete feature/v1.0 -r True
+    ```
 
 ## 简化操作
 
