@@ -10,7 +10,7 @@
 2. clone本项目
 
 ```
-$git clone https://github.com/HanderWei/git-batch.git
+$git clone ssh://git@g.hz.netease.com:22222/hzchenwei6/git-batch.git
 ```
 
 3. 下载GitPython
