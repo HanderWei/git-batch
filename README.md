@@ -74,6 +74,12 @@ pro2
 
 * 删除分支
 
+    * 删除远端分支
+
+    ```
+    $python git-batch.py delete feature/v1.0 -r True
+    ```
+    
     * 删除本地分支
 
     ```
@@ -83,11 +89,6 @@ pro2
 
     > 注意：删除本地分支时，可以不传入 -r 参数
 
-    * 删除远端分支
-
-    ```
-    $python git-batch.py delete feature/v1.0 -r True
-    ```
 
 ## 简化操作
 
