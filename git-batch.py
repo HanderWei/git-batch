@@ -1,4 +1,4 @@
-from git import Repo, InvalidGitRepositoryError, GitCommandError
+from git import Repo, InvalidGitRepositoryError, GitCommandError, Git
 from os import listdir
 from os.path import join
 import argparse
@@ -51,10 +51,12 @@ def checkout_repos(repos, branch):
 
 
 def get_all_local_branches(repo):
+    """获取本地分支"""
     return list(map(get_branch_name, repo.branches))
 
 
 def get_all_remote_branches(repo):
+    """获取远端分支"""
     return list(map(get_branch_name, repo.remotes.origin.refs))
 
 
@@ -79,10 +81,21 @@ def checkout(repo, branch, log=True):
         print("TODO")
 
 
-def create_branches(repos, branch):
+def create_branches(repos, branch, filter_file):
     """拉取新分支"""
-    for repo in repos:
-        create_branch(repo, branch)
+    if filter_file:
+        # 传入过滤文件，则仅从过滤文件中拉取新分支
+        handle_dirs = []
+        with open(filter_file, 'r') as f:
+            for handle_dir in f:
+                handle_dirs.append(handle_dir.replace('\n', ''))
+        for repo in repos:
+            if get_repo_dir_name(repo) not in handle_dirs:
+                return
+            create_branch(repo, branch)
+    else:
+        for repo in repos:
+            create_branch(repo, branch)
 
 
 def create_branch(repo, branch):
@@ -123,8 +136,7 @@ def delete_local_branch(branch, repo):
         print('Cannot delete the branch which you are currently on.')
         print()
     elif branch not in get_all_local_branches(repo):
-        print(get_repo_dir_name(repo))
-        print('Branch not found.')
+        print(get_repo_dir_name(repo) + ' branch not found.')
         print()
     else:
         repo.delete_head(branch)
@@ -136,17 +148,42 @@ def delete_remote_branch(branch, repo):
     """删除远端分支"""
     remote_branch = get_remote_branch_name(branch)
     if remote_branch not in get_all_remote_branches(repo):
-        print(get_repo_dir_name(repo))
-        print('Branch not found.')
+        print(get_repo_dir_name(repo) + ' branch not found.')
         print()
     else:
-        print("TODO")
+        remote = repo.remote(name='origin')
+        remote.push(refspec=(':' + branch))
+        print(get_repo_dir_name(repo) + ' delete ' + branch + ' finished.')
+        print()
+
+
+def clone_repos(path, clone_file):
+    with open(clone_file, 'r') as f:
+        for repo_url in f:
+            clone_repo(path, repo_url.replace('\n', ''))
+
+
+def clone_repo(path, repo_url):
+    """克隆仓库"""
+    try:
+        Git(path).clone(repo_url)
+        print('Clone ' + repo_url + ' finished.')
+    except GitCommandError:
+        print('Clone ' + repo_url + ' failed.')
 
 
 def handle_args():
     """解析脚本参数"""
-    repos = get_all_git_repos(args.path)  # 获取全部仓库
     method = args.method
+    if method == 'clone':
+        if args.filter:
+            clone_repos(args.path, args.filter)
+            return
+        else:
+            print("克隆工程需要filter文件，指定克隆项目列表")
+            return
+
+    repos = get_all_git_repos(args.path)  # 获取全部仓库
     if method == 'pull':
         """拉取最新代码"""
         pull_repos(repos)
@@ -155,7 +192,7 @@ def handle_args():
         checkout_repos(repos, args.branch)
     elif method == 'new' and args.branch != '':
         """创建新分支"""
-        create_branches(repos, args.branch)
+        create_branches(repos, args.branch, args.filter)
     elif method == 'delete' and args.branch != '':
         """删除分支"""
         delete_branches(repos, args.branch, args.remote)
@@ -166,8 +203,9 @@ def handle_args():
 parser = argparse.ArgumentParser(description='Git 批处理工具')
 parser.add_argument('-p', '--path', type=str, default='.', help='批处理目录，默认为当前目录', required=False)
 parser.add_argument('-r', '--remote', type=bool, default=False, help='是否操作远端分支，默认为False', required=False)
-parser.add_argument('method', action='store', type=str, choices=['pull', 'checkout', 'co', 'new', 'delete'],
-                    help='批量执行任务，pull, checkout[co], new')
+parser.add_argument('-f', '--filter', type=str, help='克隆项目目标文件', required=False)
+parser.add_argument('method', action='store', type=str, choices=['clone', 'pull', 'checkout', 'co', 'new', 'delete'],
+                    help='批量执行任务, clone, pull, checkout[co], new, delete')
 parser.add_argument('branch', nargs='?', action='store', type=str, default='', help='指定target分支')
 
 args = parser.parse_args()

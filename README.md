@@ -26,23 +26,67 @@ $pip3 install gitpython
 $python git-batch.py -h
 ```
 
-2. 更新代码
+2. 克隆工程
+
+```
+$python git-batch.py -f clone.txt
+```
+
+其中clone.txt 形如
+
+```
+ssh://www.github.com/user/pro1.git
+ssh://www.github.com/user/pro2.git
+ssh://www.github.com/user/pro3.git
+```
+
+3. 更新代码
 
 ```
 $python git-batch.py pull
 ```
 
-3. 切换分支
+4. 切换分支
 
 ```
 $python git-batch.py checkout master
 $python git-batch.py co master          #与上一条作用相同
 ```
 
-4. 从dev分支上创建新分支
+5. 从dev分支上创建新分支
 
 ```
 $python git-batch.py new feature/v2.0
+```
+
+创建新分支，也可以提供filter文件，只对filter文件中的项目创建新的分支
+
+```
+$python git-batch.py new feature/v2.0 -f filter.txt
+```
+
+filter.txt
+
+```
+pro1
+pro2
+```
+
+6. 删除分支
+
+* 删除本地分支
+
+```
+$python git-batch.py delete feature/v1.0 -r False
+$python git-batch.py delete feature/v1.0            # 与航一条作用相同
+```
+
+> 注意：删除本地分支时，可以不传入 -r 参数
+
+* 删除远端分支
+
+```
+$python git-batch.py delete feature/v1.0 -r True
 ```
 
 ## 简化操作
@@ -58,7 +102,23 @@ alias gits='python /项目目录/git-batch/git-batch.py'
 后续只要使用`gits`命令就可以执行该脚本。
 
 ```
-$gits pull
-$gits checkout master -p ~/Users/netease/study-project
-$gits new release/v2.0 -p ~/Users/netease/study-project
+$gits clone -f clone.txt -p ~/Users/netease/study-project # 克隆项目
+$gits pull -p ~/Users/netease/study-project # 更新代码
+$gits checkout master -p ~/Users/netease/study-project # 切换分支
+$gits new release/v2.0 -p ~/Users/netease/study-project # 从dev上拉取新分支
+$gits delete feature/v1.0 -p ~/Users/netease/study-project # 删除本地分支
+$gits delete feature/v1.0 -r true -p ~/Users/netease/study-project # 删除远端分支
+```
+
+为了避免每次输入`-p 项目根目录`，可以先切换到项目根目录
+
+```
+$cd ~/Users/netease/study-project 
+$gits clone -f clone.txt # 克隆项目
+$gits pull  # 更新代码
+$gits checkout master  # 切换分支
+$gits new release/v2.0  # 从dev上创建新分支
+$gits new release/v2.0 -f filter.txt # 创建新分支时指定项目列表
+$gits delete feature/v1.0  # 删除本地分支
+$gits delete feature/v1.0 -r true  # 删除远端分支
 ```
