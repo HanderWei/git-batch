@@ -1,6 +1,6 @@
 # git-batch
 
-> git-batch是一个基于`GitPython`的Git仓库批处理命令行脚本，可以批量更新代码、统一切换分支、从dev分支上拉取release, feature分支等。
+> git-batch是一个基于`GitPython`的Git仓库批处理命令行脚本，可以批量克隆项目、更新代码、切换分支、从dev分支上创建新分支，删除本地及远端的分支等。
 
 ## 安装
 1. 建议安装Python3，避免中文编码等问题。
