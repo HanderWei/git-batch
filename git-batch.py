@@ -3,6 +3,9 @@ from os import listdir
 from os.path import join
 import argparse
 
+# 暂存列表
+stash_repos = []
+
 
 def path_to_repo(path):
     """将路径转换成Repo对象，若非Git目录，则抛出异常"""
@@ -29,11 +32,20 @@ def pull_repos(repos):
 
 def git_pull_single_repo(repo):
     """拉取到最新代码"""
+    stashed = False
     if repo.is_dirty():
         print(repo.git_dir + " 包含未提交文件，已暂存。")
         repo.git.stash('save')
+        stash_repos.append(repo)
+        stashed = True
     repo.remote().pull()
     print(repo.working_dir.split('/')[-1] + ' pull finished.')
+    if stashed:
+        try:
+            repo.git.stash('pop')
+            print(repo.git_dir + " stash pop finished.")
+        except GitCommandError:
+            print(repo.git_dir + " merge conflict, please merge by yourself.")
 
 
 def get_branch_name(branch):
